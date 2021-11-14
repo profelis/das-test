@@ -133,14 +133,14 @@ def main()
 
 
 [export]
-def timeout_tests(var res: SuiteResult; totalTime: int64; timeout: float)
+def private timeout_tests(var res: SuiteResult; totalTime: int64; timeout: float)
     res.errors += 1
     res.total += 1
     log::error("Test timed out after {timeout}s")
     finish_tests(res, totalTime)
 
 
-def finish_tests(res: SuiteResult; totalTime: int64)
+def private finish_tests(res: SuiteResult; totalTime: int64)
     let resCode = res.failed + res.errors
     let totalDt = get_time_usec(totalTime)
     log::info("\n{res.total} tests, {res.passed} passed, {res.failed} failed, {res.errors} errors, {res.skipped} skipped")

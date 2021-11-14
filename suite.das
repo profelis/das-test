@@ -287,7 +287,7 @@ def private test_any(name: string; func; args_num: int; var context: SuiteFileCt
         log::green("{context.indenting}--- PASS '{name}' {time_dt_hr(dt)}")
 
 
-def errorOrBlue(expectFailure: bool; msg: string)
+def private errorOrBlue(expectFailure: bool; msg: string)
     if expectFailure
         log::blue(msg)
     else

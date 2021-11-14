@@ -7,7 +7,7 @@ require daslib/ast_boost
 require testing public
 
 [macro_function]
-def validate_arguments(args): bool
+def private validate_arguments(args): bool
     let len = length(args)
     if len == 0
         return true
