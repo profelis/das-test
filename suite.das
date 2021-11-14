@@ -40,7 +40,7 @@ def SuiteCtx(args: array<string>): SuiteCtx
     return <- ctx
 
 
-struct SuiteFileCtx
+struct FileCtx
     [[do_not_delete]] context: rtti::Context?
     uriPaths: bool = false
     indenting: string = ""
@@ -49,15 +49,15 @@ struct SuiteFileCtx
     expectFailure: bool = false
 
 
-def SuiteFileCtx(ctx: SuiteCtx): SuiteFileCtx
-    var res <- internalSuiteFileCtx(ctx)
+def FileCtx(ctx: SuiteCtx): FileCtx
+    var res <- internalFileCtx(ctx)
     unsafe
         res.context = addr(this_context())
     return <- res
 
 
-def private internalSuiteFileCtx(ctx: SuiteCtx): SuiteFileCtx
-    return <- [[SuiteFileCtx uriPaths=ctx.uriPaths, verbose=ctx.verbose]]
+def private internalFileCtx(ctx: SuiteCtx): FileCtx
+    return <- [[FileCtx uriPaths=ctx.uriPaths, verbose=ctx.verbose]]
 
 
 def private match_test_name(name: string; ctx: SuiteCtx)
@@ -70,13 +70,13 @@ def private match_test_name(name: string; ctx: SuiteCtx)
 
 
 def test_file(file_name: string; ctx: SuiteCtx): SuiteResult
-    var fileCtx <- internalSuiteFileCtx(ctx)
+    var fileCtx <- internalFileCtx(ctx)
     var res = test_file(file_name, ctx, fileCtx)
     delete fileCtx
     return res
 
 
-def test_file(file_name: string; ctx: SuiteCtx; file_ctx: SuiteFileCtx): SuiteResult
+def test_file(file_name: string; ctx: SuiteCtx; file_ctx: FileCtx): SuiteResult
     var res: SuiteResult
     var access := make_file_access("")
     access |> add_file_access_root("dastest", ctx.dastestRoot)
@@ -159,42 +159,42 @@ def test_file(file_name: string; ctx: SuiteCtx; file_ctx: SuiteFileCtx): SuiteRe
     return res
 
 
-def test_func(name: string; var context: SuiteFileCtx; func: function<(t: T?): void>): SuiteResult
+def test_func(name: string; var context: FileCtx; func: function<(t: T?): void>): SuiteResult
     var res: SuiteResult
     test_any(name, func, 1, context, res)
     return res
 
 
-def test_func(name: string; var context: SuiteFileCtx; func: function<(): void>): SuiteResult
+def test_func(name: string; var context: FileCtx; func: function<(): void>): SuiteResult
     var res: SuiteResult
     test_any(name, func, 0, context, res)
     return res
 
 
-def test_func(name: string; var context: SuiteFileCtx; func: lambda<(t: T?): void>): SuiteResult
+def test_func(name: string; var context: FileCtx; func: lambda<(t: T?): void>): SuiteResult
     var res: SuiteResult
     test_any(name, func, 1, context, res)
     return res
 
 
-def test_func(name: string; var context: SuiteFileCtx; func: lambda<(): void>): SuiteResult
+def test_func(name: string; var context: FileCtx; func: lambda<(): void>): SuiteResult
     var res: SuiteResult
     test_any(name, func, 0, context, res)
     return res
 
 
 [export]
-def private test_any_func(name: string; func: function; args_num: int; var context: SuiteFileCtx; var res: SuiteResult&)
+def private test_any_func(name: string; func: function; args_num: int; var context: FileCtx; var res: SuiteResult&)
     test_any(name, func, args_num, context, res)
 
 
 [export]
-def private test_any_lambda(name: string; func: lambda; args_num: int; var context: SuiteFileCtx; var res: SuiteResult&)
+def private test_any_lambda(name: string; func: lambda; args_num: int; var context: FileCtx; var res: SuiteResult&)
     test_any(name, func, args_num, context, res)
 
 
 [export]
-def private sub_test_any_func(name: string; func: function; args_num: int; var context: SuiteFileCtx; var res: SuiteResult&)
+def private sub_test_any_func(name: string; func: function; args_num: int; var context: FileCtx; var res: SuiteResult&)
     var subContext := context
     subContext.indenting = "\t" + subContext.indenting
     test_any(name, func, args_num, subContext, res)
@@ -202,14 +202,14 @@ def private sub_test_any_func(name: string; func: function; args_num: int; var c
 
 
 [export]
-def private sub_test_any_lambda(name: string; func: lambda; args_num: int; var context: SuiteFileCtx; var res: SuiteResult&)
+def private sub_test_any_lambda(name: string; func: lambda; args_num: int; var context: FileCtx; var res: SuiteResult&)
     var subContext := context
     subContext.indenting = "\t" + subContext.indenting
     test_any(name, func, args_num, subContext, res)
     delete subContext
 
 
-def private test_any(name: string; func; args_num: int; var context: SuiteFileCtx; var res: SuiteResult&)
+def private test_any(name: string; func; args_num: int; var context: FileCtx; var res: SuiteResult&)
     log::info("{context.indenting}=== RUN '{name}'")
     let beforeFailed = res.failed
     res.total += 1
