@@ -76,16 +76,6 @@ def test_file(file_name: string; ctx: SuiteCtx): SuiteResult
     return res
 
 
-def validate_arguments(args): bool
-    let len = length(args)
-    if len == 0
-        return true
-    if len == 1
-        return (args[0]._type.isPointer && args[0]._type.firstType.isStructure && args[0]._type.firstType.structType.name == "T"
-                && args[0]._type.firstType.structType._module != null && args[0]._type.firstType.structType._module.name == "testing")
-    return false
-
-
 def test_file(file_name: string; ctx: SuiteCtx; file_ctx: SuiteFileCtx): SuiteResult
     var res: SuiteResult
     var access := make_file_access("")
@@ -161,15 +151,8 @@ def test_file(file_name: string; ctx: SuiteCtx; file_ctx: SuiteFileCtx): SuiteRe
                                 for arg in ann.arguments
                                     if arg.name == "name"
                                         name = "{arg.sValue}"
-                                if !match_test_name(name, ctx)
-                                    return
-                                if !validate_arguments(fn.arguments)
-                                    res.total += 1
-                                    res.errors += 1
-                                    log::error("{file_info_hr(fn.at, fileCtx.uriPaths)}: Failed to execute test '{name}', invalid arguments")
-                                    log::info("expected function header: {fn.name}() or {fn.name}(t: testing::T?)")
-                                    return
-                                test_any(name, func, length(fn.arguments), fileCtx, res)
+                                if match_test_name(name, ctx)
+                                    test_any(name, func, length(fn.arguments), fileCtx, res)
                                 return
                     delete fileCtx
     access := null
