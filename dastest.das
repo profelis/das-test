@@ -12,7 +12,7 @@ require suite
 require log
 
 
-let jsonResultPrefix = "##dastest##\n"
+let private jsonResultPrefix = "##dastest##\n"
 
 
 def private collect_input_paths(args: array<string>; var paths: array<string>)
@@ -72,10 +72,10 @@ def main()
         return
 
     let isolatedMode = args |> has_value("--isolated-mode")
+    let ctx <- SuiteCtx(args)
     if !isolatedMode
-        let ctx <- SuiteCtx(args)
         for file in files
-            let uri = uriPaths ? file_name_to_uri(file) : file
+            let uri = ctx.uriPaths ? file_name_to_uri(file) : file
             let fileTime = ref_time_ticks()
             let status = suite::test_file(file, ctx)
             let fileDt = get_time_usec(fileTime)
@@ -87,7 +87,7 @@ def main()
             res += status
     else
         for file in files
-            let uri = uriPaths ? file_name_to_uri(file) : file
+            let uri = ctx.uriPaths ? file_name_to_uri(file) : file
             let singleTest = "{args[0]} {args[1]} -- --run {file} {log::useTtyColors ? " --color" : ""}"
             var exitCode = 0
             var parsedResult = false
