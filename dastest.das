@@ -143,7 +143,7 @@ def private timeout_tests(var res: SuiteResult; totalTime: int64; timeout: float
 def private finish_tests(res: SuiteResult; totalTime: int64)
     let resCode = res.failed + res.errors
     let totalDt = get_time_usec(totalTime)
-    log::info("\n{res.total} tests, {res.passed} passed, {res.failed} failed, {res.errors} errors, {res.skipped} skipped")
+    log::info("\n{to_string(res)}")
     if resCode == 0
         log::green("SUCCESS! {time_dt_hr(totalDt)}")
     else

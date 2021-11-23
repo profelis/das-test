@@ -49,3 +49,7 @@ def SuiteResult(val: JsonValue?)
         errors=int((obj?["errors"] ?? JV(0lf)) as _number),
         skipped=int((obj?["skipped"] ?? JV(0lf)) as _number)
     ]]
+
+
+def to_string(res: SuiteResult): string
+    return "{res.total} tests, {res.passed} passed, {res.failed} failed, {res.errors} errors, {res.skipped} skipped"
