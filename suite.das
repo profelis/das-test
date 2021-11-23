@@ -132,30 +132,55 @@ def test_file(file_name: string; ctx: SuiteCtx; file_ctx: FileCtx): SuiteResult
                     if !sok
                         res.total += 1
                         res.errors += 1
-                        log::error("Failed to compile {file_name}\n{serrors}")
+                        log::error("Failed to simulate {file_name}\n{serrors}")
                         return
-                    var fileCtx := file_ctx
-                    unsafe
-                        fileCtx.context = reinterpret<Context?> context
-                    let mod = program |> get_this_module()
-                    mod |> module_for_each_function <| $(f)
-                        if f.hash == 0u
-                            return
-                        let func = *context |> get_function_by_mnh(f.hash)
-                        let fn <- mod |> find_module_function_via_rtti(func)
-                        if fn == null
-                            return
-                        for ann in fn.annotations
-                            if ann.annotation.name == "test"
-                                var name = "{fn.name}"
-                                for arg in ann.arguments
-                                    if arg.name == "name"
-                                        name = "{arg.sValue}"
-                                if match_test_name(name, ctx)
-                                    test_any(name, func, length(fn.arguments), fileCtx, res)
-                                return
-                    delete fileCtx
+                    var mod = program |> get_this_module()
+                    if mod != null && context != null
+                        res += test_module(*mod, *context, ctx, file_ctx)
+                    else
+                        res.errors += 1
+                        res.total += 1
+                        var msg = "Failed to execute {file_name}"
+                        if mod == null
+                            msg = "{msg}. Current module is null."
+                        if context == null
+                            msg = "{msg}. Current context is null."
+                        log::error(msg)
     access := null
+    return res
+
+
+def test_module(var mod: rtti::Module; var context: rtti::Context; suite_ctx: SuiteCtx): SuiteResult
+    var fileCtx <- internalFileCtx(suite_ctx)
+    var res = test_module(mod, context, suite_ctx, fileCtx)
+    delete fileCtx
+    return res
+
+
+def test_module(var mod: rtti::Module; var context: rtti::Context; suite_ctx: SuiteCtx; file_ctx: FileCtx): SuiteResult
+    var res: SuiteResult
+    var fileCtx := file_ctx
+    var modPtr: Module?
+    unsafe
+        fileCtx.context = addr(context)
+        modPtr = addr(mod)
+    modPtr |> module_for_each_function <| $(f)
+        if f.hash == 0u
+            return
+        let func = context |> get_function_by_mnh(f.hash)
+        let fn <- modPtr |> find_module_function_via_rtti(func)
+        if fn == null
+            return
+        for ann in fn.annotations
+            if ann.annotation.name == "test"
+                var name = "{fn.name}"
+                for arg in ann.arguments
+                    if arg.name == "name"
+                        name = "{arg.sValue}"
+                if match_test_name(name, suite_ctx)
+                    test_any(name, func, length(fn.arguments), fileCtx, res)
+                return
+    delete fileCtx
     return res
 
 
