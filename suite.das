@@ -165,7 +165,7 @@ def test_module(var mod: rtti::Module; var context: rtti::Context; suite_ctx: Su
         fileCtx.context = addr(context)
         modPtr = addr(mod)
     modPtr |> module_for_each_function <| $(f)
-        if f.hash == 0u
+        if f.hash == 0ul
             return
         let func = context |> get_function_by_mnh(f.hash)
         let fn <- modPtr |> find_module_function_via_rtti(func)
