@@ -15,6 +15,7 @@ require suite_result public
 
 struct SuiteCtx
     dastestRoot: string
+    projectPath: string
     uriPaths: bool = false
     testNames: array<string>
     verbose: bool = false
@@ -30,12 +31,18 @@ def private collect_tests_names(args: array<string>; var names: array<string>)
             names |> push <| args[i + 1]
 
 
+def get_str_arg(args : array<string>; name : string; def_val : string) : string
+    let idx = find_index(args, name)
+    return idx >= 0 && idx + 1 < length(args) ? args[idx + 1] : def_val
+
+
 def SuiteCtx(args: array<string>): SuiteCtx
     var ctx <- SuiteCtx()
     let at = get_line_info()
     ctx.dastestRoot = dir_name(at.fileInfo != null ? string(at.fileInfo.name) : args[1])
     ctx.verbose = args |> has_value("--verbose")
     ctx.uriPaths = args |> has_value("--uri-paths")
+    ctx.projectPath = args |> get_str_arg("--test-project", "")
     collect_tests_names(args, ctx.testNames)
     return <- ctx
 
@@ -78,7 +85,7 @@ def test_file(file_name: string; ctx: SuiteCtx): SuiteResult
 
 def test_file(file_name: string; ctx: SuiteCtx; file_ctx: FileCtx): SuiteResult
     var res: SuiteResult
-    var access := make_file_access("")
+    var access := make_file_access(ctx.projectPath)
     access |> add_file_access_root("dastest", ctx.dastestRoot)
     using <| $(var mg:ModuleGroup#)
         using <| $(var cop:CodeOfPolicies#)
