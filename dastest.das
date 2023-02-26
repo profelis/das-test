@@ -48,7 +48,7 @@ def main()
     let runIdx = args |> find_index("--run")
     if runIdx != -1
         let res = suite::test_file(args[runIdx + 1], SuiteCtx(args))
-        log::info_raw("{jsonResultPrefix}{write_json(JV(res))}")
+        log::info_raw("\n{jsonResultPrefix}{write_json(JV(res))}\n{jsonResultPrefix}")
         return
 
     var res: SuiteResult
@@ -103,7 +103,7 @@ def main()
                     while !feof(f)
                         let st = fgets(f)
                         if st == jsonResultPrefix
-                            readJson = true
+                            readJson = !readJson
                             continue
                         if readJson
                             jsonResult += st
@@ -122,13 +122,14 @@ def main()
                 log::green("PASS {uri} {time_dt_hr(fileDt)}")
             else
                 log::red("FAIL {uri} {time_dt_hr(fileDt)}")
-                if exitCode != 0
-                    log::red("exit status {exitCode}")
-                if !parsedResult
+                if exitCode != 0 || !parsedResult
                     res.total += 1
                     res.errors += 1
+                if !parsedResult
                     log::red("`{uri}` execution was interrupted, crashed for example")
                     log::info("to get more information, run the test manually\n> {singleTest}")
+                if exitCode != 0
+                    log::red("exit status {exitCode}")
     finish_tests(res, startTime)
 
 
