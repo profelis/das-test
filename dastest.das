@@ -12,6 +12,8 @@ require suite
 require log
 require math
 
+options multiple_contexts
+
 let private jsonResultPrefix = "##dastest##\n"
 
 
@@ -104,7 +106,7 @@ def main()
             res += status
     else
         let totalFiles = length(files)
-        let totalThreads = max(1, args |> get_int_arg("--isolated-mode-threads", get_total_hw_threads()))
+        let totalThreads = max(1, args |> get_int_arg("--isolated-mode-threads", get_total_hw_threads() * 2)) // magic x2, os should be able to schedule sub processes in parallel
         log::info("Running {totalFiles} tests in isolated mode with {totalThreads} threads\n")
         with_channel(totalFiles) <| $ (inputChannel)
             with_channel(totalFiles) <| $ (outputChannel)
@@ -112,7 +114,7 @@ def main()
 
                     for t in range(totalThreads)
                         new_thread <| @
-                            for_each(inputChannel) <| $ (input : IsoInput#)
+                            for_each_clone(inputChannel) <| $ (input : IsoInput#)
                                 var isoRes : IsolatedResult
                                 isoRes.uri = clone_string(input.uri)
                                 isoRes.cmd = clone_string(input.cmd)
@@ -122,6 +124,7 @@ def main()
                                         if f == null
                                             // log::error("Internal error: Failed to execute cmd > {input.cmd}")
                                             isoRes.err |> push("Internal error: Failed to execute cmd > {input.cmd}")
+                                            // isoRes.status.errors ++
                                             return
                                         var readJson = false
                                         var jsonResult = ""
@@ -137,9 +140,10 @@ def main()
                                                 isoRes.log |> push(st)
                                         var jsError: string
                                         var js = jsonResult |> read_json(jsError)
-                                        if !empty(jsError)
+                                        if !empty(jsError) || js == null
                                             // log::error("Internal error: failed to parse json result {jsError}")
                                             isoRes.err |> push("Internal error: failed to parse json result {jsError}")
+                                            // isoRes.status.errors ++
                                         elif js != null
                                             isoRes.parsedResult = true
                                             isoRes.status = SuiteResult(js)
@@ -154,11 +158,12 @@ def main()
 
                     for file in files
                         let uri = ctx.uriPaths ? file_name_to_uri(file) : file
-                        let singleTest = "{args[0]} {args[1]} -- --run {file} {log::useTtyColors ? " --color" : ""}"
+                        let jitstr = jit_enabled() ? "-jit" : ""
+                        let singleTest = "{args[0]} {args[1]} {jitstr} -- --run {file} {log::useTtyColors ? " --color" : ""}"
                         inputChannel |> push_clone([[IsoInput uri=clone_string(uri), cmd=clone_string(singleTest)]])
                         inputChannel |> notify()
 
-                    for isoRes in each(outputChannel, type<IsolatedResult>)
+                    for isoRes in each_clone(outputChannel, type<IsolatedResult>)
                         res += isoRes.status
                         for err in isoRes.err
                             log::error(err)
@@ -181,7 +186,7 @@ def main()
     finish_tests(res, startTime)
 
 
-[export]
+[export, pinvoke]
 def timeout_tests(var res: SuiteResult; start_time: int64; timeout_sec: float)
     res.errors += 1
     res.total += 1

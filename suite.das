@@ -64,7 +64,7 @@ def FileCtx(ctx: SuiteCtx): FileCtx
 
 
 def private internalFileCtx(ctx: SuiteCtx): FileCtx
-    return <- [[FileCtx uriPaths=ctx.uriPaths, verbose=ctx.verbose]]
+    return <- [[FileCtx() uriPaths=ctx.uriPaths, verbose=ctx.verbose]]
 
 
 def private match_test_name(name: string; ctx: SuiteCtx)
@@ -90,6 +90,9 @@ def test_file(file_name: string; ctx: SuiteCtx; file_ctx: FileCtx): SuiteResult
     using <| $(var mg:ModuleGroup)
         using <| $(var cop:CodeOfPolicies)
             cop.aot_module = true
+            cop.threadlock_context = true
+            cop.jit = jit_enabled()
+            cop.jit_module := "{get_das_root()}/daslib/just_in_time.das"
             compile_file(file_name, access, unsafe(addr(mg)), cop) <| $(ok, program, output)
                 var expectedErrors : table<CompilationError; int>
                 if program != null
